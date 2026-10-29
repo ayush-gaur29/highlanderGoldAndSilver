@@ -2,7 +2,6 @@ import React, { useEffect } from 'react';
 import { NavLink, Link } from 'react-router-dom';
 import { Icons } from '../../utils/icons';
 import { BUSINESS_INFO } from '../../data/businessInfo';
-import { useCart } from '../../context/CartContext';
 
 export interface MobileDrawerProps {
   isOpen: boolean;
@@ -13,7 +12,6 @@ export const MobileDrawer: React.FC<MobileDrawerProps> = ({
   isOpen,
   onClose
 }) => {
-  const { totalItemCount, setIsCartOpen } = useCart();
 
   // Close on Escape key press and prevent scroll when open
   useEffect(() => {

@@ -13,6 +13,9 @@ export const CollectionPage: React.FC = () => {
     allItems,
     filteredItems,
     categories,
+    isLoading,
+    error,
+    refetch,
     activeCategory,
     setActiveCategory,
     searchQuery,
@@ -57,7 +60,6 @@ export const CollectionPage: React.FC = () => {
                   <Icons.Check size={14} />
                   <span>Guaranteed Sold Value</span>
                 </div>
-
               </div>
             </div>
 
@@ -71,6 +73,12 @@ export const CollectionPage: React.FC = () => {
                   width={1376}
                   height={768}
                   loading="eager"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src !== '/assets/brand/highlander_refined_emblem.jpg') {
+                      target.src = '/assets/brand/highlander_refined_emblem.jpg';
+                    }
+                  }}
                 />
               </div>
               <div className="page-banner-badge">
@@ -119,20 +127,28 @@ export const CollectionPage: React.FC = () => {
           {/* Results Metadata Bar */}
           <div className="collection-meta-bar">
             <div className="meta-results-count">
-              Showing <span className="active-count-highlight">{filteredItems.length}</span> of {allItems.length} available pieces
-              {activeCategory !== 'All' && (
-                <span className="active-filter-indicator">
-                  in <strong>{activeCategory}</strong>
-                </span>
-              )}
-              {searchQuery && (
-                <span className="active-filter-indicator">
-                  matching &ldquo;<strong>{searchQuery}</strong>&rdquo;
-                </span>
+              {isLoading ? (
+                <span>Accessing live Supabase inventory...</span>
+              ) : error ? (
+                <span style={{ color: '#DC2626' }}>Database connection interrupted</span>
+              ) : (
+                <>
+                  Showing <span className="active-count-highlight">{filteredItems.length}</span> of {allItems.length} available pieces
+                  {activeCategory.toLowerCase() !== 'all' && (
+                    <span className="active-filter-indicator">
+                      in <strong>{activeCategory}</strong>
+                    </span>
+                  )}
+                  {searchQuery && (
+                    <span className="active-filter-indicator">
+                      matching &ldquo;<strong>{searchQuery}</strong>&rdquo;
+                    </span>
+                  )}
+                </>
               )}
             </div>
 
-            {hasActiveFilters && (
+            {hasActiveFilters && !isLoading && !error && (
               <button
                 type="button"
                 className="reset-filters-btn"
@@ -145,15 +161,80 @@ export const CollectionPage: React.FC = () => {
             )}
           </div>
 
-          {/* Product Cards Grid */}
-          {filteredItems.length > 0 ? (
+          {/* Content States: Loading, Error, Empty, or Grid */}
+          {isLoading ? (
+            <div className="collection-loading-container" style={{ padding: '4rem 1rem', textAlign: 'center' }}>
+              <div
+                style={{
+                  margin: '0 auto 1.5rem',
+                  width: '44px',
+                  height: '44px',
+                  border: '3px solid rgba(184, 150, 87, 0.2)',
+                  borderTopColor: '#B89657',
+                  borderRadius: '50%',
+                  animation: 'spin 0.8s linear infinite'
+                }}
+              />
+              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.25rem', color: 'var(--color-navy-dark, #1B2A4A)', marginBottom: '0.35rem' }}>
+                Connecting to Highlander Vault Catalog
+              </h3>
+              <p style={{ color: 'var(--text-secondary, #6B7280)', fontSize: '0.875rem' }}>
+                Fetching certified numismatic rarities and bullion from Supabase...
+              </p>
+            </div>
+          ) : error ? (
+            <div
+              className="collection-error-box"
+              style={{
+                padding: '3rem 2rem',
+                textAlign: 'center',
+                background: '#FEF2F2',
+                border: '1px solid #FECACA',
+                borderRadius: '8px',
+                marginTop: '2rem'
+              }}
+            >
+              <div style={{ color: '#DC2626', marginBottom: '0.75rem', display: 'flex', justifyContent: 'center' }}>
+                <Icons.AlertCircle size={36} />
+              </div>
+              <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', color: '#991B1B', marginBottom: '0.5rem' }}>
+                Unable to Load Storefront Inventory
+              </h3>
+              <p style={{ color: '#7F1D1D', maxWidth: '520px', margin: '0 auto 1.5rem', fontSize: '0.9rem', lineHeight: '1.5' }}>
+                {error}
+              </p>
+              <button
+                type="button"
+                className="btn btn-gold"
+                onClick={() => refetch()}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}
+              >
+                <Icons.Refresh size={15} />
+                <span>Retry Connection</span>
+              </button>
+            </div>
+          ) : allItems.length === 0 ? (
+            <div className="collection-empty-box" style={{ marginTop: '2rem' }}>
+              <div className="empty-box-icon">
+                <Icons.Package size={36} />
+              </div>
+              <h3 className="empty-box-title">No Inventory Currently Listed</h3>
+              <p className="empty-box-text">
+                Our active catalog in Bigfork, Montana is currently being updated. Please check back shortly or contact our storefront directly.
+              </p>
+              <Link to="/contact" className="btn btn-gold" style={{ marginTop: '1.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span>Inquire With Storefront</span>
+                <Icons.ArrowRight size={15} />
+              </Link>
+            </div>
+          ) : filteredItems.length > 0 ? (
             <div className="item-grid" style={{ marginTop: '2rem' }}>
               {filteredItems.map((item) => (
                 <ItemCard key={item.id} item={item} />
               ))}
             </div>
           ) : (
-            <div className="collection-empty-box">
+            <div className="collection-empty-box" style={{ marginTop: '2rem' }}>
               <div className="empty-box-icon">
                 <Icons.Search size={32} />
               </div>

@@ -1,14 +1,32 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { HeroSection } from './Home/HeroSection';
 import { FeaturedCarousel } from '../components/collection/FeaturedCarousel';
 import { SectionHeading } from '../components/common/SectionHeading';
-import { INVENTORY_ITEMS } from '../data/inventory';
+import { InventoryItem } from '../types';
+import { InventoryService } from '../services/inventoryService';
 import { BUSINESS_INFO } from '../data/businessInfo';
 import { Icons } from '../utils/icons';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 
 export const HomePage: React.FC = () => {
+  const [items, setItems] = useState<InventoryItem[]>([]);
+
+  useEffect(() => {
+    let isMounted = true;
+    InventoryService.getInventory()
+      .then((data) => {
+        if (isMounted) setItems(data);
+      })
+      .catch((err) => {
+        console.error('[HomePage] Error fetching featured items:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
   // Setup smooth scroll reveal observer
   useScrollReveal();
 
@@ -21,12 +39,12 @@ export const HomePage: React.FC = () => {
       <section className="section section-body" id="featured-collection">
         <div className="container">
           <FeaturedCarousel
-            items={INVENTORY_ITEMS}
+            items={items}
           />
 
           <div className="mobile-cta-center" style={{ marginTop: '2.5rem', textAlign: 'center' }}>
             <Link to="/collection" className="btn btn-gold btn-browse-collection" style={{ display: 'inline-flex' }}>
-              <span>Browse All {INVENTORY_ITEMS.length} Certified Pieces</span>
+              <span>Browse All {items.length > 0 ? items.length : ''} Certified Pieces</span>
               <Icons.ArrowRight size={16} />
             </Link>
           </div>

@@ -47,7 +47,7 @@ export const PastAuctionsSection: React.FC<PastAuctionsSectionProps> = ({ pastAu
               <div className="past-auction-body">
                 <h3 className="past-auction-title">{item.title}</h3>
                 <div className="past-auction-specs">
-                  {item.specs.map((spec, idx) => (
+                  {item.specs.map((spec: string, idx: number) => (
                     <span key={idx} className="past-spec-chip">
                       {spec}
                     </span>

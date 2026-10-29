@@ -152,6 +152,8 @@ export const CustomerInquiryForm: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
+    if (isSubmitting) return;
+
     setTouched({
       fullName: true,
       email: true,

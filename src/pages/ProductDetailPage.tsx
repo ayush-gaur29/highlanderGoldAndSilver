@@ -1,24 +1,60 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
-import { INVENTORY_ITEMS } from '../data/inventory';
+import { InventoryItem } from '../types';
+import { InventoryService } from '../services/inventoryService';
 import { BUSINESS_INFO } from '../data/businessInfo';
-import { findProductBySlug, getProductPath } from '../utils/slug';
+import { findProductBySlug } from '../utils/slug';
 import { calculateSettlement, generatePayPalPaymentUrl } from '../utils/payment';
 import { Icons } from '../utils/icons';
 import { ItemCard } from '../components/collection/ItemCard';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
-  const navigate = useNavigate();
-  const { addToCart, updateQuantity } = useCart();
+  const { addToCart } = useCart();
 
+  const [item, setItem] = useState<InventoryItem | null>(null);
+  const [relatedItems, setRelatedItems] = useState<InventoryItem[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showAddedNotice, setShowAddedNotice] = useState(false);
 
-  // Find product dynamically by slug or ID
-  const item = findProductBySlug(slug);
+  // Fetch product dynamically from Supabase by slug or ID
+  useEffect(() => {
+    let isMounted = true;
+    setIsLoading(true);
+
+    InventoryService.getInventory()
+      .then((all) => {
+        if (!isMounted) return;
+        const found = findProductBySlug(slug, all);
+        setItem(found || null);
+
+        if (found) {
+          const related = all
+            .filter((inv) => inv.id !== found.id)
+            .sort((a) => (a.category === found.category ? -1 : 1))
+            .slice(0, 3);
+          setRelatedItems(related);
+          document.title = `${found.title} — Highlander Gold & Silver`;
+        } else {
+          document.title = 'Piece Not Found — Highlander Gold & Silver';
+        }
+        setIsLoading(false);
+      })
+      .catch((err) => {
+        console.error('[ProductDetailPage] Failed to load inventory item:', err);
+        if (isMounted) {
+          setItem(null);
+          setIsLoading(false);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [slug]);
 
   // Scroll to top and reset image index when item changes
   useEffect(() => {
@@ -26,13 +62,33 @@ export const ProductDetailPage: React.FC = () => {
     setSelectedImageIndex(0);
     setQuantity(1);
     setShowAddedNotice(false);
+  }, [slug]);
 
-    if (item) {
-      document.title = `${item.title} — Highlander Gold & Silver`;
-    } else {
-      document.title = 'Piece Not Found — Highlander Gold & Silver';
-    }
-  }, [item, slug]);
+  if (isLoading) {
+    return (
+      <main className="product-detail-main not-found-view" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="container" style={{ textAlign: 'center', padding: '5rem 1rem' }}>
+          <div
+            style={{
+              margin: '0 auto 1.5rem',
+              width: '44px',
+              height: '44px',
+              border: '3px solid rgba(184, 150, 87, 0.2)',
+              borderTopColor: '#B89657',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite'
+            }}
+          />
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', color: '#1B2A4A', marginBottom: '0.5rem' }}>
+            Retrieving Numismatic Record...
+          </h2>
+          <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>
+            Accessing Highlander Vault records from Supabase
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   // If item is not found, display a graceful not-found state
   if (!item) {
@@ -71,7 +127,11 @@ export const ProductDetailPage: React.FC = () => {
     );
   }
 
-  const isUnavailable = item.status === 'Unavailable';
+  const isUnavailable =
+    item.status === 'Unavailable' ||
+    item.status === 'Closed' ||
+    item.stock_status === 'Out of Stock' ||
+    (typeof item.stock_quantity === 'number' && item.stock_quantity <= 0);
   const images = item.additionalImages && item.additionalImages.length > 0
     ? item.additionalImages
     : [item.featuredImage];
@@ -90,12 +150,6 @@ export const ProductDetailPage: React.FC = () => {
   const handleQuantityChange = (delta: number) => {
     setQuantity((prev) => Math.max(1, prev + delta));
   };
-
-  // Find related pieces (same category, or other featured pieces, excluding current item)
-  const relatedItems = INVENTORY_ITEMS
-    .filter((inv) => inv.id !== item.id)
-    .sort((a, b) => (a.category === item.category ? -1 : 1))
-    .slice(0, 3);
 
   return (
     <main className="product-detail-main">

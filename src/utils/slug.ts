@@ -1,11 +1,11 @@
 import { InventoryItem } from '../types';
-import { INVENTORY_ITEMS } from '../data/inventory';
 
 /**
  * Creates an SEO-friendly URL slug from a product title.
  * e.g. "1876 George T. Morgan Proposed $100 Gold Union™" -> "1876-george-t-morgan-proposed-100-gold-union"
  */
 export function createProductSlug(title: string): string {
+  if (!title) return '';
   return title
     .toLowerCase()
     .replace(/[™®©]/g, '')
@@ -22,18 +22,22 @@ export function getProductPath(item: InventoryItem): string {
 }
 
 /**
- * Finds a product from the inventory list by slug, item ID, or lot number.
+ * Finds a product from an inventory list by slug, item ID, lot number, or SKU.
  */
-export function findProductBySlug(slugOrId: string | undefined): InventoryItem | undefined {
-  if (!slugOrId) return undefined;
+export function findProductBySlug(
+  slugOrId: string | undefined,
+  items: InventoryItem[] = []
+): InventoryItem | undefined {
+  if (!slugOrId || !Array.isArray(items)) return undefined;
   const normalized = decodeURIComponent(slugOrId).toLowerCase().trim();
 
-  return INVENTORY_ITEMS.find((item) => {
+  return items.find((item) => {
     const slug = createProductSlug(item.title);
     return (
       slug === normalized ||
       item.id.toLowerCase() === normalized ||
       item.lotNumber.toLowerCase() === normalized ||
+      (item.sku && item.sku.toLowerCase() === normalized) ||
       item.id.toLowerCase() === `item-${normalized}`
     );
   });

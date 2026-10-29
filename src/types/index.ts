@@ -8,28 +8,64 @@ export type MetalCategory = 'all' | 'Gold' | 'Morgan Dollars' | 'Silver Bullion'
 export interface InventoryItem {
   id: string;
   lotNumber: string;
+  lot_number?: string;
+  sku?: string;
   title: string;
   lead?: string;
   description: string;
   category: string;
+  category_id?: string | null;
   metal: string;
+  coin_type?: string;
+  year?: string;
+  country_mint?: string;
+  denomination?: string;
+  weight?: string;
+  weight_troy_oz?: number;
   purity?: string;
+  fineness?: number;
   grade?: string;
+  cert_company?: string;
+  cert_number?: string;
+  special_features?: string;
   mintage?: string;
   price: number;
   priceFormatted: string;
-  estimateRange?: string;
-  paymentNote?: string;
-  featuredImage: string;
-  additionalImages?: string[];
-  isFeatured?: boolean;
-  status: 'Available' | 'Unavailable' | 'Pending' | 'Closed';
+  inventory?: number;
+  stock_quantity?: number;
+  stock_status?: string;
+  storefront_status?: string;
+  status: 'Available' | 'Unavailable' | 'Pending' | 'Closed' | string;
   statusNote?: string;
+  show_on_storefront?: boolean;
+  estimateRange?: string;
+  estimate_range?: string;
+  paymentNote?: string;
+  payment_note?: string;
+  featuredImage: string;
+  featured_image?: string;
+  additionalImages?: string[];
+  additional_images?: string[];
+  isFeatured?: boolean;
+  is_featured?: boolean;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface CartItem {
   item: InventoryItem;
   quantity: number;
+}
+
+export interface PastAuctionItem {
+  id: string;
+  lotNumber: string;
+  title: string;
+  specs: string[];
+  realizedPrice: number;
+  realizedPriceFormatted: string;
+  statusText: string;
+  image: string;
 }
 
 export interface BusinessInfo {

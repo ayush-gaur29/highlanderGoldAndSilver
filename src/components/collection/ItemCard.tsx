@@ -11,7 +11,11 @@ export interface ItemCardProps {
 
 export const ItemCard: React.FC<ItemCardProps> = ({ item, onClick }) => {
   const navigate = useNavigate();
-  const isUnavailable = item.status === 'Unavailable';
+  const isUnavailable =
+    item.status === 'Unavailable' ||
+    item.status === 'Closed' ||
+    item.stock_status === 'Out of Stock' ||
+    (typeof item.stock_quantity === 'number' && item.stock_quantity <= 0);
   const productPath = getProductPath(item);
 
   const handleCardClick = () => {
@@ -58,6 +62,12 @@ export const ItemCard: React.FC<ItemCardProps> = ({ item, onClick }) => {
           alt={item.title}
           className="card-img"
           loading="lazy"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src !== '/assets/brand/highlander_refined_emblem.jpg') {
+              target.src = '/assets/brand/highlander_refined_emblem.jpg';
+            }
+          }}
         />
       </div>
 

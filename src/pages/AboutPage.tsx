@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Icons } from '../utils/icons';
-import { BUSINESS_INFO } from '../data/businessInfo';
 import { useScrollReveal } from '../hooks/useScrollReveal';
 import { StorefrontNarrativeSection } from '../components/common/StorefrontNarrativeSection';
 

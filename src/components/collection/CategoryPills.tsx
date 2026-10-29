@@ -24,10 +24,10 @@ export const CategoryPills: React.FC<CategoryPillsProps> = ({
       {categories.map((cat) => {
         const isAll = cat.toLowerCase() === 'all';
         const label = isAll ? 'All Pieces' : cat;
-        const count = allItems && Array.isArray(allItems) && allItems.length > 0
-          ? (isAll ? allItems.length : allItems.filter((i) => i.category === cat).length)
+        const count = allItems && Array.isArray(allItems)
+          ? (isAll ? allItems.length : allItems.filter((i) => i.category.toLowerCase() === cat.toLowerCase()).length)
           : null;
-        const isActive = activeCategory === cat;
+        const isActive = activeCategory.toLowerCase() === cat.toLowerCase();
 
         return (
           <button

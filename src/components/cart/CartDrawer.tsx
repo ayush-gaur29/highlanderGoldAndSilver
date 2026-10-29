@@ -12,7 +12,6 @@ export const CartDrawer: React.FC = () => {
     setIsCartOpen,
     removeFromCart,
     updateQuantity,
-    clearCart,
     totalItemCount,
     subtotal,
     buyersPremium,

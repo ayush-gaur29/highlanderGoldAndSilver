@@ -1,6 +1,5 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { BUSINESS_INFO } from '../data/businessInfo';
 import { Icons } from '../utils/icons';
 import { StorefrontNarrativeSection } from '../components/common/StorefrontNarrativeSection';
 import { CustomerInquiryForm } from '../components/contact/CustomerInquiryForm';

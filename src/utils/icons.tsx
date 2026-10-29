@@ -1,19 +1,22 @@
+import React from 'react';
+
 export interface IconProps {
   size?: number;
   className?: string;
   strokeWidth?: number;
+  style?: React.CSSProperties;
 }
 
 export const Icons = {
-  Search: ({ size = 18, className = '', strokeWidth = 2 }: IconProps) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+  Search: ({ size = 18, className = '', strokeWidth = 2, style }: IconProps) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
       <circle cx="11" cy="11" r="8"></circle>
       <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
     </svg>
   ),
 
-  Sliders: ({ size = 18, className = '', strokeWidth = 2 }: IconProps) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+  Sliders: ({ size = 18, className = '', strokeWidth = 2, style }: IconProps) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
       <line x1="4" y1="21" x2="4" y2="14"></line>
       <line x1="4" y1="10" x2="4" y2="3"></line>
       <line x1="12" y1="21" x2="12" y2="12"></line>
@@ -26,15 +29,15 @@ export const Icons = {
     </svg>
   ),
 
-  Close: ({ size = 18, className = '', strokeWidth = 2 }: IconProps) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+  Close: ({ size = 18, className = '', strokeWidth = 2, style }: IconProps) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
       <line x1="18" y1="6" x2="6" y2="18"></line>
       <line x1="6" y1="6" x2="18" y2="18"></line>
     </svg>
   ),
 
-  ArrowRight: ({ size = 16, className = '', strokeWidth = 2 }: IconProps) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className}>
+  ArrowRight: ({ size = 16, className = '', strokeWidth = 2, style }: IconProps) => (
+    <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={strokeWidth} strokeLinecap="round" strokeLinejoin="round" className={className} style={style}>
       <line x1="5" y1="12" x2="19" y2="12"></line>
       <polyline points="12 5 19 12 12 19"></polyline>
     </svg>
