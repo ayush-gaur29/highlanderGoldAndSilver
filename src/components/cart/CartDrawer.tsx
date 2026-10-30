@@ -1,17 +1,21 @@
 import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../../context/CartContext';
+import { useAuth } from '../../context/AuthContext';
+import { OrderService } from '../../services/orderService';
 import { Icons } from '../../utils/icons';
 import { BUSINESS_INFO } from '../../data/businessInfo';
 
 export const CartDrawer: React.FC = () => {
   const navigate = useNavigate();
+  const { user, profile, openAuthModal } = useAuth();
   const {
     cartItems,
     isCartOpen,
     setIsCartOpen,
     removeFromCart,
     updateQuantity,
+    clearCart,
     totalItemCount,
     subtotal,
     buyersPremium,
@@ -328,6 +332,35 @@ export const CartDrawer: React.FC = () => {
                 rel="noopener noreferrer"
                 className="cart-checkout-btn"
                 id="cartCheckoutBtn"
+                onClick={async (e) => {
+                  if (!user) {
+                    e.preventDefault();
+                    sessionStorage.setItem('hgs_paypal_redirect', payPalCheckoutUrl);
+                    handleClose();
+                    openAuthModal('login');
+                    return;
+                  }
+
+                  // Asynchronously record order in Supabase
+                  try {
+                    await OrderService.createOrder(
+                      {
+                        fullName: profile?.full_name || user.email?.split('@')[0] || 'Collector Member',
+                        email: user.email || '',
+                        phone: profile?.phone || '',
+                        address: profile?.city ? `${profile.city}, ${profile.state || 'MT'}` : '',
+                        city: profile?.city || '',
+                        state: profile?.state || '',
+                        paymentMethod: 'PayPal'
+                      },
+                      cartItems
+                    );
+                    clearCart();
+                    handleClose();
+                  } catch (err) {
+                    console.warn('[CartDrawer] Supabase order recording notice:', err);
+                  }
+                }}
               >
                 <Icons.CreditCard size={18} />
                 <span>Proceed to PayPal Checkout ({formattedTotalSettlement})</span>

@@ -86,10 +86,27 @@ export const ProfilePage: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="profile-loading-screen">
-        <div className="auth-spinner" style={{ width: 44, height: 44, borderWidth: 3 }} />
-        <p className="profile-loading-text">Loading collector profile...</p>
-      </div>
+      <main className="product-detail-main not-found-view" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div className="container" style={{ textAlign: 'center', padding: '5rem 1rem' }}>
+          <div
+            style={{
+              margin: '0 auto 1.5rem',
+              width: '44px',
+              height: '44px',
+              border: '3px solid rgba(184, 150, 87, 0.2)',
+              borderTopColor: '#B89657',
+              borderRadius: '50%',
+              animation: 'spin 0.8s linear infinite'
+            }}
+          />
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: '1.35rem', color: '#1B2A4A', marginBottom: '0.5rem' }}>
+            Retrieving Collector Profile...
+          </h2>
+          <p style={{ color: '#6B7280', fontSize: '0.9rem' }}>
+            Accessing Highlander Vault records from Supabase
+          </p>
+        </div>
+      </main>
     );
   }
 

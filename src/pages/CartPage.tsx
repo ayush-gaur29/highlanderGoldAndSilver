@@ -1,10 +1,13 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
+import { OrderService } from '../services/orderService';
 import { BUSINESS_INFO } from '../data/businessInfo';
 import { Icons } from '../utils/icons';
 
 export const CartPage: React.FC = () => {
+  const { user, profile, openAuthModal } = useAuth();
   const {
     cartItems,
     setIsCartOpen,
@@ -228,6 +231,33 @@ export const CartPage: React.FC = () => {
                     rel="noopener noreferrer"
                     className="btn btn-gold btn-checkout-primary"
                     id="pageCartCheckoutBtn"
+                    onClick={async (e) => {
+                      if (!user) {
+                        e.preventDefault();
+                        sessionStorage.setItem('hgs_paypal_redirect', payPalCheckoutUrl);
+                        openAuthModal('login');
+                        return;
+                      }
+
+                      // Asynchronously record order in Supabase
+                      try {
+                        await OrderService.createOrder(
+                          {
+                            fullName: profile?.full_name || user.email?.split('@')[0] || 'Collector Member',
+                            email: user.email || '',
+                            phone: profile?.phone || '',
+                            address: profile?.city ? `${profile.city}, ${profile.state || 'MT'}` : '',
+                            city: profile?.city || '',
+                            state: profile?.state || '',
+                            paymentMethod: 'PayPal'
+                          },
+                          cartItems
+                        );
+                        clearCart();
+                      } catch (err) {
+                        console.warn('[CartPage] Supabase order recording notice:', err);
+                      }
+                    }}
                   >
                     <Icons.CreditCard size={18} />
                     <span>Proceed to PayPal Checkout</span>

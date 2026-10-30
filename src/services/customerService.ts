@@ -352,7 +352,27 @@ export class CustomerService {
 
       return orders.map((o) => {
         const key = o.order_id || o.id || o.order_number;
-        const mappedItems = itemsByOrderId[key] || [];
+        let mappedItems = itemsByOrderId[key] || [];
+
+        // Dual fallback: parse JSON from orders.items column if order_items row was empty
+        if (mappedItems.length === 0 && o.items) {
+          try {
+            const parsed = typeof o.items === 'string' ? JSON.parse(o.items) : o.items;
+            if (Array.isArray(parsed)) {
+              mappedItems = parsed.map((item: any, idx: number) => ({
+                id: item.id || `item-${idx}`,
+                order_id: key,
+                lot_number: item.lot_number,
+                title: item.title,
+                quantity: item.quantity || 1,
+                unit_price: Number(item.unit_price) || 0,
+                created_at: o.created_at
+              }));
+            }
+          } catch {
+            // ignore JSON parse error
+          }
+        }
 
         return {
           id: o.id || key,

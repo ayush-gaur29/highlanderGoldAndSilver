@@ -625,10 +625,15 @@
   display: inline-block;
   width: 18px;
   height: 18px;
-  border: 2px solid rgba(255, 255, 255, 0.35);
-  border-top-color: currentColor;
+  border: 2px solid rgba(184, 150, 87, 0.25);
+  border-top-color: #B89657;
   border-radius: 50%;
-  animation: modernSpin 0.7s linear infinite;
+  animation: spin 0.8s linear infinite;
+}
+
+.btn .auth-spinner {
+  border-color: rgba(255, 255, 255, 0.35);
+  border-top-color: #FFFFFF;
 }
 
 @keyframes modernSpin {
@@ -2450,3 +2455,50 @@
   max-width: 420px;
   margin: 0 auto;
 }
+
+/* ==========================================================================
+   5. STOREFRONT SECURE CHECKOUT PAGE
+   ========================================================================== */
+
+.checkout-page-main {
+  background: #F8FAFD;
+  min-height: calc(100vh - var(--header-height));
+  padding: 2.5rem 0 5rem;
+}
+
+.checkout-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  align-items: start;
+}
+
+@media (min-width: 992px) {
+  .checkout-grid {
+    grid-template-columns: 1.5fr 1fr;
+  }
+}
+
+.checkout-city-state-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap: 0.75rem;
+}
+
+@media (max-width: 580px) {
+  .checkout-city-state-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.checkout-summary-column {
+  position: relative;
+}
+
+@media (min-width: 992px) {
+  .checkout-summary-column {
+    position: sticky;
+    top: calc(var(--header-height) + 1.5rem);
+  }
+}
+

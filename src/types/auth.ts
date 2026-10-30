@@ -49,6 +49,8 @@ export interface CustomerOrder {
   order_number: string;
   customer_id?: string;
   customer_email?: string;
+  customer_name?: string;
+  transaction_id?: string;
   total_amount: number;
   order_status: OrderStatus;
   payment_status: PaymentStatus;

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
+import { useAuth } from '../context/AuthContext';
 import { InventoryItem } from '../types';
 import { InventoryService } from '../services/inventoryService';
 import { BUSINESS_INFO } from '../data/businessInfo';
@@ -11,6 +12,8 @@ import { ItemCard } from '../components/collection/ItemCard';
 
 export const ProductDetailPage: React.FC = () => {
   const { slug } = useParams<{ slug: string }>();
+  const navigate = useNavigate();
+  const { user, openAuthModal } = useAuth();
   const { addToCart } = useCart();
 
   const [item, setItem] = useState<InventoryItem | null>(null);
@@ -156,22 +159,7 @@ export const ProductDetailPage: React.FC = () => {
       <div className="container">
         {/* Breadcrumb Navigation & Back Link */}
         <div className="detail-top-nav-bar">
-          <nav className="detail-breadcrumbs" aria-label="Breadcrumb">
-            <Link to="/" className="breadcrumb-link">Home</Link>
-            <span className="breadcrumb-sep">/</span>
-            <Link to="/collection" className="breadcrumb-link">Collection</Link>
-            <span className="breadcrumb-sep">/</span>
-            <Link
-              to={`/collection?category=${encodeURIComponent(item.category)}`}
-              className="breadcrumb-link"
-            >
-              {item.category}
-            </Link>
-            <span className="breadcrumb-sep">/</span>
-            <span className="breadcrumb-current" title={item.title}>
-              Item #{item.lotNumber}
-            </span>
-          </nav>
+
 
           <Link to="/collection" className="detail-back-link">
             <Icons.ArrowRight size={13} style={{ transform: 'rotate(180deg)' }} />
@@ -355,6 +343,32 @@ export const ProductDetailPage: React.FC = () => {
                     rel="noopener noreferrer"
                     className="btn btn-silver btn-detail-paypal"
                     id="detailPayPalBtn"
+                    onClick={async (e) => {
+                      if (!user) {
+                        e.preventDefault();
+                        sessionStorage.setItem('hgs_paypal_redirect', payPalUrl);
+                        openAuthModal('login');
+                        return;
+                      }
+
+                      // Asynchronously record order in Supabase for user order tracking
+                      try {
+                        await OrderService.createOrder(
+                          {
+                            fullName: profile?.full_name || user.email?.split('@')[0] || 'Collector Member',
+                            email: user.email || '',
+                            phone: profile?.phone || '',
+                            address: profile?.city ? `${profile.city}, ${profile.state || 'MT'}` : '',
+                            city: profile?.city || '',
+                            state: profile?.state || '',
+                            paymentMethod: 'PayPal'
+                          },
+                          [{ item, quantity }]
+                        );
+                      } catch (err) {
+                        console.warn('[ProductDetailPage] Supabase order recording notice:', err);
+                      }
+                    }}
                   >
                     <Icons.CreditCard size={16} />
                     <span>

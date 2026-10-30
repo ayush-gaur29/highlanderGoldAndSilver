@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Icons } from '../../utils/icons';
 import { supabase } from '../../services/supabase';
@@ -13,6 +14,10 @@ export const AuthModal: React.FC = () => {
     signup,
     resetPassword
   } = useAuth();
+  const navigate = useNavigate();
+
+  // Check if opened due to checkout requirement
+  const isCheckoutIntent = typeof window !== 'undefined' && Boolean(sessionStorage.getItem('hgs_paypal_redirect'));
 
   // Login form state
   const [loginEmail, setLoginEmail] = useState('');
@@ -98,7 +103,14 @@ export const AuthModal: React.FC = () => {
     });
     setIsLoading(false);
 
-    if (!result.success) {
+    if (result.success) {
+      const paypalUrl = sessionStorage.getItem('hgs_paypal_redirect');
+      if (paypalUrl) {
+        sessionStorage.removeItem('hgs_paypal_redirect');
+        closeAuthModal();
+        window.open(paypalUrl, '_blank', 'noopener,noreferrer');
+      }
+    } else {
       setErrorMsg(result.error || 'Login failed. Please check your credentials.');
       if (result.unconfirmed) {
         setIsUnconfirmedUser(true);
@@ -148,6 +160,12 @@ export const AuthModal: React.FC = () => {
         setNeedsVerification(true);
       } else {
         setSuccessMsg('Account created successfully! Welcome to Highlander Gold & Silver.');
+        const paypalUrl = sessionStorage.getItem('hgs_paypal_redirect');
+        if (paypalUrl) {
+          sessionStorage.removeItem('hgs_paypal_redirect');
+          closeAuthModal();
+          window.open(paypalUrl, '_blank', 'noopener,noreferrer');
+        }
       }
     } else {
       setIsRateLimitActive(Boolean(result.isRateLimited));
@@ -243,6 +261,25 @@ export const AuthModal: React.FC = () => {
               ? 'Enjoy direct Montana tax-exempt purchasing & guaranteed valuations'
               : 'Enter your registered email to receive secure recovery instructions'}
           </p>
+
+          {isCheckoutIntent && (
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              background: 'rgba(212, 175, 55, 0.12)',
+              color: '#8A6400',
+              border: '1px solid rgba(212, 175, 55, 0.35)',
+              borderRadius: 'var(--radius-full)',
+              padding: '0.3rem 0.85rem',
+              fontSize: '0.76rem',
+              fontWeight: 600,
+              marginTop: '0.65rem'
+            }}>
+              <Icons.ShieldCheck size={14} />
+              <span>Sign in required to finalize your order</span>
+            </div>
+          )}
         </div>
 
         {/* View Switcher Tabs (Only visible when not in verification or forgot password mode) */}
