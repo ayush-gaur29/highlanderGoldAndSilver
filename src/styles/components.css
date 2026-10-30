@@ -6468,3 +6468,184 @@ section[id] {
 
 
 
+
+
+/* ==========================================================================
+   Gallery Stage Controls & Visual Specimen Showcase
+   ========================================================================== */
+
+/* Gallery Stage Arrows & Counter */
+.stage-nav-btn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(1, 33, 74, 0.12);
+  color: var(--color-aubergine);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.1);
+  transition: all var(--transition-fast);
+}
+
+.stage-nav-btn:hover {
+  background: #FFFFFF;
+  color: var(--color-gold);
+  border-color: var(--color-gold);
+  transform: translateY(-50%) scale(1.08);
+  box-shadow: 0 6px 18px rgba(184, 150, 87, 0.25);
+}
+
+.stage-nav-btn.prev {
+  left: 0.85rem;
+}
+
+.stage-nav-btn.next {
+  right: 0.85rem;
+}
+
+.stage-counter-pill {
+  position: absolute;
+  bottom: 0.85rem;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(1, 33, 74, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #FFFFFF;
+  font-family: var(--font-mono);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 0.25rem 0.75rem;
+  border-radius: var(--radius-full);
+  letter-spacing: 0.05em;
+  z-index: 4;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+/* Description Section: Specimen Visual Gallery */
+.description-gallery-wrap {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-silver-border);
+}
+
+.description-gallery-header {
+  margin-bottom: 1rem;
+}
+
+.description-gallery-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-serif);
+  font-size: 1.05rem;
+  color: var(--color-aubergine);
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
+}
+
+.description-gallery-title svg {
+  color: var(--color-gold);
+}
+
+.description-gallery-subtitle {
+  font-size: 0.82rem;
+  color: #6B7280;
+  display: block;
+}
+
+.description-gallery-scroller {
+  display: flex;
+  gap: 1rem;
+  overflow-x: auto;
+  scroll-behavior: smooth;
+  padding: 0.5rem 0.25rem 1rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(184, 150, 87, 0.4) transparent;
+}
+
+.description-gallery-scroller::-webkit-scrollbar {
+  height: 6px;
+}
+
+.description-gallery-scroller::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.04);
+  border-radius: 4px;
+}
+
+.description-gallery-scroller::-webkit-scrollbar-thumb {
+  background: rgba(184, 150, 87, 0.5);
+  border-radius: 4px;
+}
+
+.description-gallery-scroller::-webkit-scrollbar-thumb:hover {
+  background: var(--color-gold);
+}
+
+.description-gallery-card {
+  flex: 0 0 170px;
+  background: #FFFFFF;
+  border: 1px solid var(--color-silver-border);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: 0 2px 6px rgba(1, 33, 74, 0.04);
+  text-align: center;
+}
+
+.description-gallery-card:hover {
+  border-color: var(--color-gold);
+  transform: translateY(-3px);
+  box-shadow: 0 8px 18px rgba(184, 150, 87, 0.18);
+}
+
+.description-gallery-card.active {
+  border: 2px solid var(--color-gold);
+  box-shadow: 0 0 0 3px rgba(184, 150, 87, 0.2);
+}
+
+.description-gallery-img-box {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #FDFBF7;
+  border-radius: var(--radius-xs);
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+  padding: 0.5rem;
+}
+
+.description-gallery-img-box img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform var(--transition-smooth);
+}
+
+.description-gallery-card:hover .description-gallery-img-box img {
+  transform: scale(1.08);
+}
+
+.description-gallery-badge {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--color-aubergine);
+  background: rgba(1, 33, 74, 0.05);
+  padding: 0.2rem 0.5rem;
+  border-radius: var(--radius-xs);
+  letter-spacing: 0.02em;
+}

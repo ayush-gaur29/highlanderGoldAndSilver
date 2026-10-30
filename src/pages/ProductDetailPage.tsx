@@ -22,6 +22,53 @@ export const ProductDetailPage: React.FC = () => {
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
   const [showAddedNotice, setShowAddedNotice] = useState(false);
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const thumbRowRef = React.useRef<HTMLDivElement>(null);
+
+  // Dynamic images combining featured_image & additional_images
+  const rawImages = item
+    ? [
+      item.featuredImage || (item as any).featured_image,
+      ...((item.additionalImages || (item as any).additional_images) || [])
+    ]
+    : [];
+  const images = rawImages
+    .filter(Boolean)
+    .filter((img, idx, arr) => arr.indexOf(img) === idx);
+  if (images.length === 0) {
+    images.push('/assets/brand/highlander_refined_emblem.jpg');
+  }
+
+  // Gallery navigation functions
+  const handlePrevImage = () => {
+    setSelectedImageIndex((prev) => (prev - 1 + images.length) % images.length);
+  };
+
+  const handleNextImage = () => {
+    setSelectedImageIndex((prev) => (prev + 1) % images.length);
+  };
+
+  // Keyboard navigation for image gallery
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (images.length <= 1) return;
+      if (e.key === 'ArrowLeft') {
+        handlePrevImage();
+      } else if (e.key === 'ArrowRight') {
+        handleNextImage();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [images.length]);
+
+  // Auto-scroll active thumbnail into view
+  useEffect(() => {
+    if (thumbRowRef.current && thumbRowRef.current.children[selectedImageIndex]) {
+      const activeEl = thumbRowRef.current.children[selectedImageIndex] as HTMLElement;
+      activeEl.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+    }
+  }, [selectedImageIndex]);
 
   // Fetch product dynamically from Supabase by slug or ID
   useEffect(() => {
@@ -135,9 +182,25 @@ export const ProductDetailPage: React.FC = () => {
     item.status === 'Closed' ||
     item.stock_status === 'Out of Stock' ||
     (typeof item.stock_quantity === 'number' && item.stock_quantity <= 0);
-  const images = item.additionalImages && item.additionalImages.length > 0
-    ? item.additionalImages
-    : [item.featuredImage];
+
+  // Touch swipe support on main stage
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.touches[0].clientX);
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (touchStartX === null || images.length <= 1) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const diff = touchStartX - touchEndX;
+    if (Math.abs(diff) > 40) {
+      if (diff > 0) {
+        handleNextImage();
+      } else {
+        handlePrevImage();
+      }
+    }
+    setTouchStartX(null);
+  };
 
   const settlement = calculateSettlement(item.price * quantity, BUSINESS_INFO.terms.buyersPremiumPercent);
   const unitSettlement = calculateSettlement(item.price, BUSINESS_INFO.terms.buyersPremiumPercent);
@@ -171,7 +234,11 @@ export const ProductDetailPage: React.FC = () => {
         <div className="product-detail-grid">
           {/* Left Column: Image Showcase & Gallery */}
           <section className="detail-gallery-column" aria-label="Product imagery">
-            <div className="detail-main-stage">
+            <div
+              className="detail-main-stage"
+              onTouchStart={handleTouchStart}
+              onTouchEnd={handleTouchEnd}
+            >
               <div className="stage-badge-lot">Item #{item.lotNumber}</div>
               <div className="stage-badge-category">{item.category}</div>
 
@@ -181,17 +248,62 @@ export const ProductDetailPage: React.FC = () => {
                 </div>
               )}
 
+              {images.length > 1 && (
+                <>
+                  <button
+                    type="button"
+                    className="stage-nav-btn prev"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handlePrevImage();
+                    }}
+                    aria-label="Previous image"
+                    title="Previous specimen view"
+                  >
+                    <Icons.ArrowRight size={16} style={{ transform: 'rotate(180deg)' }} />
+                  </button>
+
+                  <button
+                    type="button"
+                    className="stage-nav-btn next"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleNextImage();
+                    }}
+                    aria-label="Next image"
+                    title="Next specimen view"
+                  >
+                    <Icons.ArrowRight size={16} />
+                  </button>
+
+                  <div className="stage-counter-pill">
+                    <span>{selectedImageIndex + 1} / {images.length}</span>
+                  </div>
+                </>
+              )}
+
               <img
                 src={images[selectedImageIndex] || item.featuredImage}
-                alt={item.title}
+                alt={`${item.title} view ${selectedImageIndex + 1}`}
                 className="detail-main-image"
                 loading="eager"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== '/assets/brand/highlander_refined_emblem.jpg') {
+                    target.src = '/assets/brand/highlander_refined_emblem.jpg';
+                  }
+                }}
               />
             </div>
 
             {/* Thumbnail Row if multiple views available */}
             {images.length > 1 && (
-              <div className="detail-thumb-row" role="tablist" aria-label="Product image views">
+              <div
+                ref={thumbRowRef}
+                className="detail-thumb-row"
+                role="tablist"
+                aria-label="Product image views"
+              >
                 {images.map((img, idx) => (
                   <button
                     key={idx}
@@ -202,7 +314,16 @@ export const ProductDetailPage: React.FC = () => {
                     onClick={() => setSelectedImageIndex(idx)}
                     aria-label={`View coin image ${idx + 1}`}
                   >
-                    <img src={img} alt={`View ${idx + 1} of ${item.title}`} />
+                    <img
+                      src={img}
+                      alt={`View ${idx + 1} of ${item.title}`}
+                      onError={(e) => {
+                        const target = e.currentTarget;
+                        if (target.src !== '/assets/brand/highlander_refined_emblem.jpg') {
+                          target.src = '/assets/brand/highlander_refined_emblem.jpg';
+                        }
+                      }}
+                    />
                   </button>
                 ))}
               </div>
@@ -445,6 +566,9 @@ export const ProductDetailPage: React.FC = () => {
               <h3 className="description-section-title">Historical &amp; Numismatic Overview</h3>
               <div className="detail-description-body">
                 <p>{item.description}</p>
+
+                {/* Specimen Visual Gallery with Horizontal Scroll */}
+
 
                 {item.paymentNote && (
                   <div className="detail-payment-note-box">

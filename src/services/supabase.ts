@@ -29,6 +29,19 @@ export function resolveImageUrl(path: string | undefined | null): string {
     return path;
   }
 
+  // If Supabase Storage relative path in inventory bucket
+  if (path.startsWith('inventory/')) {
+    const objectPath = path.replace(/^inventory\//, '');
+    const { data } = supabase.storage.from('inventory').getPublicUrl(objectPath);
+    return data.publicUrl;
+  }
+
+  // If relative path within items folder of inventory bucket
+  if (path.startsWith('items/')) {
+    const { data } = supabase.storage.from('inventory').getPublicUrl(path);
+    return data.publicUrl;
+  }
+
   // If Supabase Storage relative path (e.g. catalog-images/item-001.jpg or items/...)
   if (path.startsWith('catalog-images/')) {
     const objectPath = path.replace(/^catalog-images\//, '');

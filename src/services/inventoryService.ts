@@ -32,9 +32,30 @@ export function mapDbRowToInventoryItem(row: any): InventoryItem {
 
   const featuredImage = resolveImageUrl(row.featured_image ?? row.featuredImage);
   const rawAdditional = row.additional_images ?? row.additionalImages;
-  const additionalImages = Array.isArray(rawAdditional) && rawAdditional.length > 0
-    ? rawAdditional.map((img: string) => resolveImageUrl(img))
-    : [featuredImage];
+  let parsedAdditional: string[] = [];
+
+  if (Array.isArray(rawAdditional)) {
+    parsedAdditional = rawAdditional;
+  } else if (typeof rawAdditional === 'string' && rawAdditional.trim().startsWith('[')) {
+    try {
+      parsedAdditional = JSON.parse(rawAdditional);
+    } catch {
+      parsedAdditional = [rawAdditional];
+    }
+  } else if (typeof rawAdditional === 'string' && rawAdditional.trim()) {
+    parsedAdditional = rawAdditional.split(',').map((s: string) => s.trim()).filter(Boolean);
+  }
+
+  const resolvedAdditional = parsedAdditional
+    .map((img: any) => (typeof img === 'string' ? resolveImageUrl(img) : ''))
+    .filter(Boolean);
+
+  // Combine featuredImage and additional images ensuring unique, ordered list
+  const combinedImages = [featuredImage, ...resolvedAdditional].filter(
+    (img, idx, arr) => img && arr.indexOf(img) === idx
+  );
+
+  const additionalImages = combinedImages.length > 0 ? combinedImages : [featuredImage];
 
   const status = row.status || 'Available';
   const isUnavailable =

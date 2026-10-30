@@ -311,7 +311,8 @@ export class CustomerService {
   }
 
   /**
-   * Uploads customer avatar image to Supabase Storage bucket 'avatars'.
+   * Uploads customer avatar image to Supabase Storage.
+   * Uses 'inventory' storage bucket under 'avatars/' prefix (or 'avatars' bucket if configured).
    */
   static async uploadAvatarImage(
     userId: string,
@@ -328,14 +329,34 @@ export class CustomerService {
 
       const fileExt = file.name.split('.').pop() || 'jpg';
       const fileName = `${userId}-${Date.now()}.${fileExt}`;
-      const filePath = `${fileName}`;
+      const filePath = `avatars/${fileName}`;
 
-      const { error: uploadError } = await supabase.storage
-        .from('avatars')
+      let bucketName = 'avatars';
+      let { error: uploadError } = await supabase.storage
+        .from(bucketName)
         .upload(filePath, file, {
           cacheControl: '3600',
-          upsert: true
+          upsert: true,
+          contentType: file.type || 'image/jpeg'
         });
+
+      // If 'avatars' bucket does not exist, automatically fallback to 'inventory' bucket
+      if (
+        uploadError &&
+        (uploadError.message?.toLowerCase().includes('bucket not found') ||
+          (uploadError as any).statusCode === '404' ||
+          (uploadError as any).code === 'NoSuchBucket')
+      ) {
+        bucketName = 'inventory';
+        const retryResult = await supabase.storage
+          .from(bucketName)
+          .upload(filePath, file, {
+            cacheControl: '3600',
+            upsert: true,
+            contentType: file.type || 'image/jpeg'
+          });
+        uploadError = retryResult.error;
+      }
 
       if (uploadError) {
         console.error('[CustomerService] Avatar storage upload error:', uploadError.message);
@@ -343,7 +364,7 @@ export class CustomerService {
       }
 
       const { data: urlData } = supabase.storage
-        .from('avatars')
+        .from(bucketName)
         .getPublicUrl(filePath);
 
       const publicUrl = urlData.publicUrl;
