@@ -120,3 +120,6 @@ export interface ContactCardData {
   iconName: 'mapPin' | 'phone' | 'mail' | 'creditCard';
   subtext?: string;
 }
+
+
+export * from './auth';
