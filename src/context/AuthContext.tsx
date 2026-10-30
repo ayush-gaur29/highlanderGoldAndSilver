@@ -47,6 +47,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const customerProfile = await CustomerService.ensureCustomerRecord(authUser, additionalData);
         setProfile({
           ...customerProfile,
+          city: customerProfile.city || authUser.user_metadata?.city || '',
+          state: customerProfile.state || authUser.user_metadata?.state || '',
           role: detectedRole
         });
       } catch (err) {
@@ -68,6 +70,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       if (refreshed) {
         setProfile({
           ...refreshed,
+          city: refreshed.city || user.user_metadata?.city || '',
+          state: refreshed.state || user.user_metadata?.state || '',
           role: role || 'user'
         });
       }
@@ -251,11 +255,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       return { success: false, error: 'You must be signed in to update your profile.' };
     }
 
-    const res = await CustomerService.updateCustomerProfile(user.id, updates);
+    const res = await CustomerService.updateCustomerProfile(user.id, updates, user.email || undefined);
     if (res.success && res.data) {
       setProfile((prev) => ({
         ...prev,
         ...res.data,
+        city: res.data?.city !== undefined && res.data.city !== '' ? res.data.city : (updates.city ?? prev?.city ?? ''),
+        state: res.data?.state !== undefined && res.data.state !== '' ? res.data.state : (updates.state ?? prev?.state ?? ''),
         role: role || 'user'
       }));
       return { success: true };

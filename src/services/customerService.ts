@@ -27,7 +27,7 @@ export class CustomerService {
       const { data, error } = await supabase
         .from('customers')
         .select('*')
-        .eq('auth_user_id', authUserId)
+        .or(`auth_user_id.eq.${authUserId},customer_id.eq.${authUserId}`)
         .maybeSingle();
 
       if (error) {
@@ -50,13 +50,14 @@ export class CustomerService {
 
       return {
         id: data.id,
-        auth_user_id: data.auth_user_id,
+        customer_id: data.customer_id || data.auth_user_id,
+        auth_user_id: data.auth_user_id || data.customer_id,
         email: data.email,
         full_name: data.full_name || '',
         phone: data.phone || '',
         city: data.city || '',
         state: data.state || '',
-        tier: data.tier || 'Collector Member',
+        tier: data.tier || 'Collector',
         notes: data.notes || '',
         avatar_url: avatarUrl,
         created_at: data.created_at,
@@ -74,7 +75,7 @@ export class CustomerService {
    */
   static async ensureCustomerRecord(
     user: User,
-    additionalData?: { fullName?: string; phone?: string }
+    additionalData?: { fullName?: string; phone?: string; city?: string; state?: string }
   ): Promise<CustomerProfile> {
     const existing = await this.getCustomerProfile(user.id);
     if (existing) {
@@ -93,14 +94,25 @@ export class CustomerService {
       user.user_metadata?.phone ||
       '';
 
+    const city =
+      additionalData?.city ||
+      user.user_metadata?.city ||
+      '';
+
+    const state =
+      additionalData?.state ||
+      user.user_metadata?.state ||
+      '';
+
     const newCustomer = {
+      customer_id: user.id,
       auth_user_id: user.id,
       email: user.email || '',
       full_name: fullName,
       phone: phone,
-      tier: 'Collector Member',
-      city: '',
-      state: ''
+      tier: 'Collector',
+      city: city,
+      state: state
     };
 
     const { data, error } = await supabase
@@ -123,13 +135,14 @@ export class CustomerService {
 
     return {
       id: data.id,
-      auth_user_id: data.auth_user_id,
+      customer_id: data.customer_id || data.auth_user_id,
+      auth_user_id: data.auth_user_id || data.customer_id,
       email: data.email,
       full_name: data.full_name || fullName,
       phone: data.phone || phone,
-      city: data.city || '',
-      state: data.state || '',
-      tier: data.tier || 'Collector Member',
+      city: data.city || city || '',
+      state: data.state || state || '',
+      tier: data.tier || 'Collector',
       notes: data.notes || '',
       created_at: data.created_at,
       updated_at: data.updated_at
@@ -142,7 +155,8 @@ export class CustomerService {
    */
   static async updateCustomerProfile(
     authUserId: string,
-    updates: Partial<CustomerProfile>
+    updates: Partial<CustomerProfile>,
+    userEmail?: string
   ): Promise<{ success: boolean; data?: CustomerProfile; error?: string }> {
     try {
       const dbPayload: Record<string, any> = {
@@ -170,33 +184,86 @@ export class CustomerService {
         dbPayload.notes = JSON.stringify(notesObj);
       }
 
-      const { data, error } = await supabase
-        .from('customers')
-        .update(dbPayload)
-        .eq('auth_user_id', authUserId)
-        .select('*')
-        .single();
+      // 1. Check if customer record exists in customers table
+      const existing = await this.getCustomerProfile(authUserId);
+      let updatedData: any = null;
 
-      if (error) {
-        console.error('[CustomerService] Failed to update customer profile:', error.message);
-        return { success: false, error: error.message };
+      if (existing) {
+        // Record exists -> update by primary key ID or auth_user_id
+        let updateQuery = supabase.from('customers').update(dbPayload);
+        if (existing.id) {
+          updateQuery = updateQuery.eq('id', existing.id);
+        } else {
+          updateQuery = updateQuery.or(`auth_user_id.eq."${authUserId}",customer_id.eq."${authUserId}"`);
+        }
+
+        const { data, error } = await updateQuery.select('*').maybeSingle();
+        if (error) {
+          console.error('[CustomerService] Failed to update customer profile:', error.message);
+          return { success: false, error: error.message };
+        }
+        updatedData = data;
+      } else {
+        // Record does NOT exist yet -> insert new customer record
+        const newCustomer = {
+          customer_id: authUserId,
+          auth_user_id: authUserId,
+          email: updates.email || userEmail || '',
+          full_name: updates.full_name || 'Highlander Collector',
+          phone: updates.phone || '',
+          city: updates.city || '',
+          state: updates.state || '',
+          tier: 'Collector',
+          notes: dbPayload.notes || ''
+        };
+
+        const { data, error } = await supabase
+          .from('customers')
+          .insert(newCustomer)
+          .select('*')
+          .single();
+
+        if (error) {
+          console.error('[CustomerService] Failed to insert customer during profile update:', error.message);
+          return { success: false, error: error.message };
+        }
+        updatedData = data;
       }
 
-      // Sync user_metadata in Supabase Auth
+      // 2. Also synchronize full_name, phone, city, state, avatar_url in Supabase Auth user_metadata
       try {
         await supabase.auth.updateUser({
           data: {
-            full_name: updates.full_name,
-            phone: updates.phone,
-            avatar_url: updates.avatar_url
+            full_name: updates.full_name !== undefined ? updates.full_name : existing?.full_name,
+            phone: updates.phone !== undefined ? updates.phone : existing?.phone,
+            city: updates.city !== undefined ? updates.city : existing?.city,
+            state: updates.state !== undefined ? updates.state : existing?.state,
+            avatar_url: updates.avatar_url || existing?.avatar_url
           }
         });
       } catch (authErr) {
         console.warn('[CustomerService] Auth metadata sync warning:', authErr);
       }
 
-      const updatedProfile = await this.getCustomerProfile(authUserId);
-      return { success: true, data: updatedProfile || data };
+      // 3. Compose fresh profile object with newly saved city & state
+      const refreshedProfile = await this.getCustomerProfile(authUserId);
+      const finalData: CustomerProfile = refreshedProfile || {
+        id: updatedData?.id || existing?.id || authUserId,
+        customer_id: authUserId,
+        auth_user_id: authUserId,
+        email: updatedData?.email || existing?.email || userEmail || '',
+        full_name: updates.full_name !== undefined ? updates.full_name : (existing?.full_name || ''),
+        phone: updates.phone !== undefined ? updates.phone : (existing?.phone || ''),
+        city: updates.city !== undefined ? updates.city : (updatedData?.city || existing?.city || ''),
+        state: updates.state !== undefined ? updates.state : (updatedData?.state || existing?.state || ''),
+        tier: existing?.tier || 'Collector',
+        notes: dbPayload.notes || existing?.notes || '',
+        avatar_url: updates.avatar_url || existing?.avatar_url,
+        created_at: existing?.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+
+      return { success: true, data: finalData };
     } catch (err: any) {
       console.error('[CustomerService] updateCustomerProfile exception:', err);
       return { success: false, error: err.message || 'Failed to update profile' };

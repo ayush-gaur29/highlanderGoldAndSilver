@@ -125,15 +125,24 @@ export const ProfilePage: React.FC = () => {
     }
 
     setIsSaving(true);
+    const trimmedFullName = fullName.trim();
+    const trimmedPhone = phone.trim();
+    const trimmedCity = city.trim();
+    const trimmedState = state.trim();
+
     const res = await updateProfile({
-      full_name: fullName.trim(),
-      phone: phone.trim(),
-      city: city.trim(),
-      state: state.trim()
+      full_name: trimmedFullName,
+      phone: trimmedPhone,
+      city: trimmedCity,
+      state: trimmedState
     });
     setIsSaving(false);
 
     if (res.success) {
+      setFullName(trimmedFullName);
+      setPhone(trimmedPhone);
+      setCity(trimmedCity);
+      setState(trimmedState);
       setIsEditing(false);
       setStatusMessage({ type: 'success', text: 'Your personal information has been saved successfully.' });
       setTimeout(() => setStatusMessage(null), 5000);
@@ -321,10 +330,18 @@ export const ProfilePage: React.FC = () => {
                 </span>
               </div>
               <p className="account-customer-email">{user.email}</p>
-              <p className="account-member-date">
-                <Icons.Clock size={13} />
-                <span>Customer since {memberSince}</span>
-              </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+                <p className="account-member-date">
+                  <Icons.Clock size={13} />
+                  <span>Customer since {memberSince}</span>
+                </p>
+                {(profile.city || profile.state) && (
+                  <p className="account-member-date" style={{ color: 'var(--color-aubergine)', fontWeight: 500 }}>
+                    <Icons.MapPin size={13} style={{ color: '#B89657' }} />
+                    <span>{[profile.city, profile.state].filter(Boolean).join(', ')}</span>
+                  </p>
+                )}
+              </div>
             </div>
           </div>
 
